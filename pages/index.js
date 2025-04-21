@@ -1,115 +1,95 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { useState, useEffect } from 'react'
+import Head from 'next/head'
+import BookCard from '../components/BookCard'
+import AuthButton from '../components/AuthButton'
+import axios from 'axios'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const subjects = [
+  'fantasy', 'science_fiction', 'romance', 'mystery',
+  'biographies', 'history', 'adventure', 'horror', 'children', 'young_adult'
+]
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5)
+}
 
 export default function Home() {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [featured, setFeatured] = useState([])
+
+  useEffect(() => {
+    const loadRandomBooks = async () => {
+      const randomSubject = subjects[Math.floor(Math.random() * subjects.length)]
+      const randomOffset = Math.floor(Math.random() * 10) * 20
+      try {
+        const res = await axios.get(`https://openlibrary.org/subjects/${randomSubject}.json?limit=50&offset=${randomOffset}`)
+        const works = res.data.works || []
+        const randomBooks = shuffle(works).slice(0, 16)
+        setFeatured(randomBooks)
+      } catch (err) {
+        console.error('Failed to fetch random books:', err)
+      }
+    }
+    loadRandomBooks()
+  }, [])
+
+  const handleSearch = async (e) => {
+    e.preventDefault()
+    if (!query) return
+    const res = await axios.get(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}`)
+    setResults(res.data.docs.slice(0, 20))
+  }
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              pages/index.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <>
+      <Head>
+        <title>BookSphere</title>
+      </Head>
+      <div className="container mx-auto px-6 py-12">
+        <form onSubmit={handleSearch} className="mb-12 flex justify-center">
+          <div className="relative w-full max-w-lg">
+            <input
+              type="text"
+              placeholder="Search books..."
+              className="input h-12 w-full p-6 rounded-4xl shadow-custom border border-black focus:outline-none focus:ring-2 focus:ring-primary-light"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+            <button type="submit" className="absolute right-2 top-1/2 transform -translate-y-1/2 btn bg-primary text-white border-none rounded-full px-4 py-2">
+              Search
+            </button>
+          </div>
+        </form>
+
+        {results.length > 0 ? (
+          <>
+            <h2 className="text-2xl font-semibold text-foreground mb-6">Search Results</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10">
+              {results.map((book) => (
+                <BookCard key={book.key} book={book} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="text-2xl font-semibold text-foreground mb-6">Discover New Reads</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-10">
+              {featured.map((book) => (
+                <BookCard
+                  key={book.key}
+                  book={{
+                    key: book.key,
+                    title: book.title,
+                    author_name: book.authors?.map((a) => a.name),
+                    cover_i: book.cover_id
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  )
 }
